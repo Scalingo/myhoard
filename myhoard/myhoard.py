@@ -1,6 +1,7 @@
 # Copyright (c) 2019 Aiven, Helsinki, Finland. https://aiven.io/
 from myhoard import version
 from myhoard.controller import Controller
+from myhoard.s3_compat import register_s3_compatibility_handlers
 from myhoard.statsd import StatsClient
 from myhoard.util import (
     DEFAULT_XTRABACKUP_SETTINGS,
@@ -43,6 +44,7 @@ class MyHoard:
         self.reloading = False
         self.systemd_notified = False
         self.web_server = None
+        register_s3_compatibility_handlers()
 
     def request_reload(self, _signal=None, _frame=None):
         self.log.info("Got SIGHUP signal, marking config reload pending")
