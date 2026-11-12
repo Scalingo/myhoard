@@ -1395,6 +1395,30 @@ And have all test run, or just
 Setting `PYTHON_VERSION` is optional, but make sure you're using the same interpreter that was employed during setup, otherwise
 you may encounter runtime errors.
 
+# Pre-commit hooks
+
+The repository uses [pre-commit](https://pre-commit.com/) (see `.pre-commit-config.yaml`) to run linters
+(flake8, black, pylint, mypy, isort) and to keep `uv.lock` in sync with `pyproject.toml` and have it parsed by .
+
+To run the hooks automatically at every commit, install pre-commit and register the git hook once per clone:
+
+```
+pip install pre-commit
+# or: uv tool install pre-commit
+# or: sudo apt install pre-commit-pygrep-hooks
+
+pre-commit install
+```
+
+The hooks then run on the staged files at each `git commit`. If a hook modifies files (for example `uv.lock`),
+the commit is aborted: `git add` the changes and commit again.
+
+To run all hooks manually on every file:
+
+```
+pre-commit run --all-files
+```
+
 # License
 
 MyHoard is licensed under the Apache License, Version 2.0. Full license text
