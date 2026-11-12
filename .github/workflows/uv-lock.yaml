@@ -22,6 +22,9 @@ jobs:
         with:
           fetch-depth: 0
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Install system dependencies
+        # Needed to build systemd-python (dev extra) when resolving metadata
+        run: sudo apt-get update && sudo apt-get install -y libsystemd-dev pkg-config
       - name: Regenerate uv.lock
         run: uv lock
       - name: Commit updated lock file
