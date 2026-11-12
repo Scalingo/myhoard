@@ -1,0 +1,40 @@
+name: Update uv.lock
+
+on:
+  push:
+    branches:
+      - "**"
+    paths:
+      - pyproject.toml
+      - uv.lock
+      - .github/workflows/uv-lock.yaml
+
+permissions:
+  contents: write
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    # Skip pushes made by this workflow itself
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Install system dependencies
+        # Needed to build systemd-python (dev extra) when resolving metadata
+        run: sudo apt-get update && sudo apt-get install -y libsystemd-dev pkg-config
+      - name: Regenerate uv.lock
+        run: uv lock
+      - name: Commit updated lock file
+        run: |
+          if git diff --quiet -- uv.lock; then
+            echo "uv.lock is up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add uv.lock
+          git commit -m "Update uv.lock"
+          git push
