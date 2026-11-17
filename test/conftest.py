@@ -417,6 +417,7 @@ def fixture_myhoard_config(default_backup_site, mysql_master, session_tmpdir):
             "relay_log_index_file": mysql_master.config_options.relay_log_index_file,
             "relay_log_prefix": mysql_master.config_options.relay_log_file_prefix,
         },
+        "recovery_window_audit_interval": None,
         "restore_auto_mark_backups_broken": True,
         "restore_free_memory_percentage": 50,
         "restore_max_binlog_bytes": 4294967296,
