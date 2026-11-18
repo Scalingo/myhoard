@@ -26,6 +26,16 @@ coverage:
 	$(PYTHON) -m pytest $(PYTEST_ARG) --cov-report term-missing --cov-branch --cov-report xml:coverage.xml --cov myhoard test/
 
 
+UV_IMAGE ?= ghcr.io/astral-sh/uv:python3.12-bookworm
+
+# Generate dependencies lock file using `uv`. Runs in a container so that no local uv or libsystemd headers are needed.
+.PHONY: uv-lock
+uv-lock:
+	docker run --rm -v "$(CURDIR):/src" -w /src $(UV_IMAGE) sh -c '\
+		apt-get update -qq && apt-get install -y -qq --no-install-recommends libsystemd-dev pkg-config build-essential >/dev/null && \
+		uv lock; \
+		status=$$?; chown $(shell id -u):$(shell id -g) uv.lock 2>/dev/null; exit $$status'
+
 .PHONY: clean
 clean:
 	$(RM) -r *.egg-info/ build/ dist/

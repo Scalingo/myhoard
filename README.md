@@ -1395,6 +1395,14 @@ And have all test run, or just
 Setting `PYTHON_VERSION` is optional, but make sure you're using the same interpreter that was employed during setup, otherwise
 you may encounter runtime errors.
 
+# Updating the dependency lock file
+
+Dependencies are pinned in `uv.lock`, generated from `pyproject.toml`. After changing dependencies, regenerate it with:
+
+`make uv-lock`
+
+This runs `uv lock` inside a Docker container, so only Docker is required locally (no uv or system libraries).
+
 # License
 
 MyHoard is licensed under the Apache License, Version 2.0. Full license text
