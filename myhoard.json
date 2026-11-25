@@ -30,6 +30,7 @@
             "recovery_only": false
         }
     },
+    "binlog_encryption_cipher": "aes-128-ctr",
     "binlog_purge_settings": {
         "enabled": true,
         "min_binlog_age_before_purge": 600,

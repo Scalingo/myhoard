@@ -393,6 +393,7 @@ def fixture_myhoard_config(default_backup_site, mysql_master, session_tmpdir):
         "backup_sites": {
             "default": default_backup_site,
         },
+        "binlog_encryption_cipher": "aes-128-ctr",
         "binlog_purge_settings": {
             "enabled": True,
             "min_binlog_age_before_purge": 600,

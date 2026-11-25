@@ -31,7 +31,7 @@ from http.client import RemoteDisconnected
 from httplib2 import ServerNotFoundError
 from rohmu import errors as rohmu_errors
 from rohmu.compressor import CompressionStream
-from rohmu.encryptor import EncryptorStream
+from rohmu.encryptor import CIPHER_AES_128_CTR, EncryptionCipher, EncryptorStream
 from rohmu.errors import FileNotFoundFromStorageError
 from rohmu.object_storage.base import BaseTransfer
 from rohmu.object_storage.s3 import S3Transfer
@@ -167,6 +167,7 @@ class BackupStream(threading.Thread):
         self,
         *,
         backup_reason: Optional["BackupStream.BackupReason"],
+        binlog_encryption_cipher: EncryptionCipher = CIPHER_AES_128_CTR,
         binlog_progress_tracker: Optional[RateTracker] = None,
         binlogs: Optional[List[BinlogInfo]] = None,
         compression: Optional[Compression] = None,
@@ -201,6 +202,7 @@ class BackupStream(threading.Thread):
         )
         self.basebackup_operation: Optional[BasebackupOperation] = None
         self.basebackup_progress: Optional[Dict[str, Any]] = None
+        self.binlog_encryption_cipher = binlog_encryption_cipher
         self.compression = compression
         self.current_upload_index: Optional[int] = None
         # This file storage object must only be called from BackupStream's own thread. Calls from
@@ -1331,7 +1333,9 @@ class BackupStream(threading.Thread):
                 else:
                     with open(remote_binlog["full_name"], "rb") as input_file:
                         compress_stream = CompressionStream(input_file, compression_algorithm, compression_level)
-                        encrypt_stream = EncryptorStream(compress_stream, self.rsa_public_key_pem)
+                        encrypt_stream = EncryptorStream(
+                            compress_stream, self.rsa_public_key_pem, encryption_cipher=self.binlog_encryption_cipher
+                        )
                         self.file_storage.store_file_object(
                             index_name,
                             encrypt_stream,

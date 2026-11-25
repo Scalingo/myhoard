@@ -31,7 +31,7 @@ dependencies = [
     "httplib2",
     "PyMySQL >= 0.9.2",
     "PySocks",
-    "rohmu >= 2.8.2",
+    "rohmu @ git+https://github.com/sc-david-voisin/rohmu.git@eaa178575a2567f3b6b76c93b56da5f54295b4df",
     "sentry-sdk >= 2.8.0, < 3",
     "packaging",
 ]
@@ -68,6 +68,9 @@ dev = [
 [project.scripts]
 myhoard = "myhoard.myhoard:main"
 myhoard_mysql_env_update = "myhoard.update_mysql_environment:main"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.version]
 source = "vcs"

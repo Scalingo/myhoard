@@ -2,9 +2,11 @@
 
 from . import build_statsd_client, generate_rsa_key_pair, MySQLConfig, wait_for_condition
 from myhoard.backup_stream import BackupStream, BaseBackupFailureReason
+from myhoard.binlog_downloader import BinlogDownloader
 from myhoard.binlog_scanner import BinlogScanner
 from myhoard.controller import BackupSiteInfo, Controller
 from myhoard.errors import XtraBackupError
+from queue import Queue
 from rohmu.object_storage.local import LocalTransfer
 from typing import cast, Dict
 from unittest.mock import MagicMock, patch
@@ -19,6 +21,74 @@ import rohmu
 import sys
 
 pytestmark = [pytest.mark.unittest, pytest.mark.all]
+
+
+@pytest.mark.parametrize(("settings", "header"), [({}, b"pghoa1"), ({"binlog_encryption_cipher": "aes-256-gcm"}, b"pghoa2")])
+def test_binlog_encryption_round_trip(tmp_path, settings, header):
+    private_key, public_key = generate_rsa_key_pair()
+    storage = {"storage_type": "local", "directory": str(tmp_path / "remote")}
+    stream = BackupStream(
+        backup_reason=None,
+        file_storage_setup_fn=lambda: rohmu.get_transfer(storage),
+        mode=BackupStream.Mode.promoted,
+        mysql_client_params={},
+        mysql_config_file_name="",
+        mysql_data_directory="",
+        normalized_backup_time=None,
+        rsa_public_key_pem=public_key,
+        remote_binlogs_state_file=str(tmp_path / "remote_binlogs.json"),
+        server_id=1,
+        site="default",
+        state_file=str(tmp_path / "stream.json"),
+        stats=MagicMock(),
+        temp_dir=str(tmp_path),
+        **settings,
+    )
+    source = tmp_path / "mysql-bin.000001"
+    source.write_bytes(os.urandom(131072))
+    stream.state_manager.update_state(basebackup_info={"uploaded_from": 1, "binlog_index": 1})
+    stream.activate()
+    stream.add_binlogs(
+        [
+            {
+                "file_name": source.name,
+                "file_size": source.stat().st_size,
+                "full_name": str(source),
+                "gtid_ranges": [],
+                "local_index": 1,
+                "processed_at": 0.0,
+                "processing_time": 0.0,
+                "server_id": 1,
+            }
+        ]
+    )
+    stream.start()
+    try:
+        wait_for_condition(lambda: stream.is_log_backed_up(log_index=1))
+    finally:
+        stream.stop()
+
+    remote = stream.remote_binlogs[0]
+    encrypted = tmp_path / "remote" / remote["remote_key"]
+    ciphertext = encrypted.read_bytes()
+    assert ciphertext.startswith(header)
+    restored = tmp_path / "restored"
+    action = dict(remote, local_file_name=str(restored), remote_file_size=len(ciphertext))
+    requests, results = Queue(), Queue()
+    downloader = BinlogDownloader(
+        {"rsa_private_key_pem": private_key.decode(), "object_storage": storage}, requests, results
+    )
+
+    def download():
+        requests.put(action)
+        requests.put(None)
+        downloader.loop()
+        return results.get_nowait()["result"]
+
+    assert download() == "success"
+    assert restored.read_bytes() == source.read_bytes()
+    encrypted.write_bytes(ciphertext[:-1] + bytes([ciphertext[-1] ^ 1]))
+    assert download() == "failure"
 
 
 def test_backup_stream(session_tmpdir, mysql_master):
