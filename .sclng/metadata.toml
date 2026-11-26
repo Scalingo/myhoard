@@ -1,0 +1,6 @@
+dependencies = ["rohmu"]
+description = "Fork of MyHoard: a daemon for creating, managing and restoring MySQL backups."
+languages = ["python"]
+owner = "team-infrastructure-services@scalingo.com"
+team = "IST"
+version = "1.1.2"
