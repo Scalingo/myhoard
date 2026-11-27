@@ -12,6 +12,7 @@ from myhoard.util import (
     wait_for_port,
 )
 from myhoard.web_server import WebServer
+from rohmu.encryptor import CIPHER_AES_128_CTR
 
 import argparse
 import asyncio
@@ -232,6 +233,7 @@ class MyHoard:
         self.controller = Controller(
             backup_settings=self.config["backup_settings"],
             backup_sites=self.config["backup_sites"],
+            binlog_encryption_cipher=self.config.get("binlog_encryption_cipher", CIPHER_AES_128_CTR),
             binlog_purge_settings=self.config["binlog_purge_settings"],
             mysql_binlog_prefix=mysql["binlog_prefix"],
             mysql_client_params=mysql["client_params"],

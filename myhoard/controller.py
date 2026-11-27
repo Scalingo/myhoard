@@ -28,7 +28,7 @@ from http.client import RemoteDisconnected
 from httplib2 import ServerNotFoundError
 from rohmu import get_transfer
 from rohmu.compressor import DecompressSink
-from rohmu.encryptor import DecryptSink
+from rohmu.encryptor import CIPHER_AES_128_CTR, DecryptSink, EncryptionCipher, SUPPORTED_ENCRYPTION_CIPHERS
 from rohmu.object_storage.base import BaseTransfer
 from socket import gaierror
 from socks import GeneralProxyError, ProxyConnectionError
@@ -183,6 +183,7 @@ class Controller(threading.Thread):
         *,
         backup_settings,
         backup_sites: Dict[str, BackupSiteInfo],
+        binlog_encryption_cipher: EncryptionCipher = CIPHER_AES_128_CTR,
         binlog_purge_settings,
         mysql_binlog_prefix,
         mysql_client_params,
@@ -212,6 +213,9 @@ class Controller(threading.Thread):
         self.backup_sites = backup_sites
         self.backup_streams: List[BackupStream] = []
         self.backup_streams_initialized = False
+        if binlog_encryption_cipher not in SUPPORTED_ENCRYPTION_CIPHERS:
+            raise ValueError(f"Unsupported binlog encryption cipher: {binlog_encryption_cipher!r}")
+        self.binlog_encryption_cipher = binlog_encryption_cipher
         self.binlog_not_caught_log_counter = 0
         self.binlog_progress_tracker = (
             RateTracker(
@@ -1023,6 +1027,7 @@ class Controller(threading.Thread):
         # data stored in local state file if available or in backup file storage if local state is not available
         return BackupStream(
             backup_reason=None,
+            binlog_encryption_cipher=self.binlog_encryption_cipher,
             binlog_progress_tracker=self.binlog_progress_tracker,
             compression=backup_site.get("compression"),
             file_storage_setup_fn=lambda: get_transfer(backup_site["object_storage"]),
@@ -2294,6 +2299,7 @@ class Controller(threading.Thread):
         site_id, backup_site = self._get_upload_backup_site()
         stream = BackupStream(
             backup_reason=backup_reason,
+            binlog_encryption_cipher=self.binlog_encryption_cipher,
             binlog_progress_tracker=self.binlog_progress_tracker,
             binlogs=self.binlog_scanner.binlogs,
             compression=backup_site.get("compression"),

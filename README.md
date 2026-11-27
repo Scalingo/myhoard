@@ -140,7 +140,7 @@ MyHoard requires Python 3.10 or later and some additional components to operate:
 
 - [percona-xtrabackup](https://github.com/percona/percona-xtrabackup)
 - [python3-PyMySQL](https://github.com/PyMySQL/PyMySQL)
-- [python3-rohmu](https://github.com/aiven/rohmu)
+- [python3-rohmu](https://github.com/Scalingo/rohmu/tree/eaa178575a2567f3b6b76c93b56da5f54295b4df)
 - [MySQL server 8.x+](https://www.oracle.com/mysql/)
 
 Currently MyHoard only works on Linux and expects MySQL service to be managed
@@ -279,6 +279,15 @@ settings.
 This site is not considered for new backups, it can only be used for recovering
 an existing backup. Its backups are never used as the base of an incremental
 backup, so the first backup after restoring from it is always a full one.
+
+**binlog_encryption_cipher**
+
+Cipher for new binlog uploads. Supported values are:
+
+- `aes-128-ctr` (default, with HMAC-SHA256)
+- `aes-256-gcm`
+
+Upgrade all MyHoard nodes that read these binlogs before setting `aes-256-gcm`.
 
 **binlog_purge_settings.enabled**
 
