@@ -140,7 +140,7 @@ MyHoard requires Python 3.10 or later and some additional components to operate:
 
 - [percona-xtrabackup](https://github.com/percona/percona-xtrabackup)
 - [python3-PyMySQL](https://github.com/PyMySQL/PyMySQL)
-- [python3-rohmu](https://github.com/sc-david-voisin/rohmu/tree/eaa178575a2567f3b6b76c93b56da5f54295b4df)
+- [python3-rohmu](https://github.com/Scalingo/rohmu/tree/eaa178575a2567f3b6b76c93b56da5f54295b4df)
 - [MySQL server 8.x+](https://www.oracle.com/mysql/)
 
 Currently MyHoard only works on Linux and expects MySQL service to be managed
